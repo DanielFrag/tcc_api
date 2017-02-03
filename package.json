@@ -1,0 +1,6 @@
+{
+	"name": "slingshot-api",
+	"dependencies":{
+		"express": "~4.0.0"
+	}
+}
