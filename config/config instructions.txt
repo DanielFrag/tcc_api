@@ -1,7 +1,14 @@
-Criar o arquivo parameters.js que deve expor a string que usada para assinar o token, a porta do servidor e a url do banco.
+Criar o arquivo parameters.js que deve expor:
+- a string que usada para assinar o token,
+- uma senha usada para acessar partes específicas da api,
+- a porta do servidor,
+- a url do banco de produção e
+- a url do banco de desenvolvimento.
 Algo como:
 module.exports = {
-    secret: 'yourKey',
+    tokenSecret: 'yourTokenKey',
+    pass: 'yourPass',
     port: process.env.PORT || '8080',
-    urlDb: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/your_collection'
+    urlDb: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/your_collection',
+    testUrlDb: 'mongodb://localhost:27017/your_test_collection'
 }

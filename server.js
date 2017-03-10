@@ -1,11 +1,4 @@
-var express = require('express');
-var app = express();
+var app = require('./config/express.js')();
 var port = process.env.PORT || 8080;
 
-app.route('/date')
-	.get(function(req, res) {
-		var date = new Date();
-		res.send(date.toUTCString());
-	});
-
-app.listen(port, function(){console.log("Servidor escutando porta " + port);});
+app.listen(port, function(){console.log("Server listen port: " + port);});
