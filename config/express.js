@@ -1,12 +1,17 @@
-var express = require('express');
-require('./dataBase.js')(true);
+let express = require('express');
+let bodyParser = require('body-parser');
+require('./dataBase.js')(process.env.NODE_ENV == 'test');
 
-var gameRequire = require('../route/gameRequire.js');
-var gameAnalytics = require('../route/gameAnalytics.js');
+let gameRequire = require('../route/gameRequire.js');
+let gameAnalytics = require('../route/gameAnalytics.js');
 
 module.exports = ()=>{
-    var app = express();
+    let app = express();
 
+    app.use(bodyParser.json());                                     
+    app.use(bodyParser.urlencoded({extended: true}));               
+    app.use(bodyParser.text());                                    
+    app.use(bodyParser.json({ type: 'application/json'}));  
     app.use('/game', gameRequire);
     app.use('/analytics', gameAnalytics);
 

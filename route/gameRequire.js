@@ -2,19 +2,16 @@ var express = require('express');
 var router = express.Router();
 
 var userRegisterController = require('../controller/userRegister');
-/*
-router.use(()=>{
-    console.log('middleware de gameRequire');
-});
-*/
+var requisitionController = require('../controller/requisition');
 
-router.post('/userRegister', (req, res) => {userRegisterController(req, res)});
-/*
-router.post('/start');
-router.post('/printedAd');
-router.post('/clickedAd');
-router.post('/purchase');
-*/
+router.put('/userRegister', userRegisterController.insertUser);
+
+router.use('/user', requisitionController.tokenDecode);
+router.post('/user/start', requisitionController.start);
+router.post('/user/printedAd', requisitionController.printedAd);
+router.post('/user/clickedAd', requisitionController.clickedAd);
+router.post('/user/purchase', requisitionController.purchase);
+
 router.get('/date', (req, res)=> {
         var date = new Date();
         res.send(date.toUTCString());

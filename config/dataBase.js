@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-module.exports = (testDB)=>{
+module.exports = (testDB, callback)=>{
     if (testDB) {
         mongoose.connect(require('./parameters.js').testUrlDb)
             .then(
@@ -8,6 +8,13 @@ module.exports = (testDB)=>{
                 },
                 err => {
                     console.log('test db connection error');
+                }
+            )
+            .then(
+                () => {
+                    if (callback) {
+                        callback();
+                    }
                 }
             );
     } else {
@@ -18,6 +25,13 @@ module.exports = (testDB)=>{
                 },
                 err => {
                     console.log('db connection error');
+                }
+            )
+            .then(
+                () => {
+                    if (callback) {
+                        callback();
+                    }
                 }
             );
     }
