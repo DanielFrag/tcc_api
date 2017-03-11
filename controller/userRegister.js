@@ -1,3 +1,4 @@
+var mongoose = require('mongoose');
 var jwt = require('jsonwebtoken');
 var User = require('../model/User');
 var secretKey = require('../config/parameters.js').secret;

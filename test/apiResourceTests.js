@@ -31,7 +31,7 @@ describe('Route called on game start for a unregistered user', ()=>{
             });
         });
     });
-
+/*
     describe('module export test', () => {
         let user;
         it('should register a user', () => {
@@ -44,7 +44,7 @@ describe('Route called on game start for a unregistered user', ()=>{
 
         });
     });
-
+*/
     after('clear db changes', (done) => {
             User.find({}, (err, docs) => {
                 if (err) {
