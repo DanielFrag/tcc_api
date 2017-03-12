@@ -1,8 +1,8 @@
 let express = require('express');
 let router = express.Router();
 
-let userRegisterController = require('../controller/userRegister');
-let requisitionController = require('../controller/requisition');
+let userRegisterController = require('../controller/userRegister.js');
+let requisitionController = require('../controller/userRequisition.js');
 
 router.put('/userRegister', userRegisterController.insertUser);
 

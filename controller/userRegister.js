@@ -5,7 +5,7 @@ var secrets = require('../config/parameters.js');
 
 module.exports = {
     insertUser: (req, res)=>{
-        if (req.body.gameKey != secrets.gameKey) {
+        if (!req.body.gameKey || req.body.gameKey != secrets.gameKey) {
             res.status(400).send('Invalid game key');
         } else {
             var userToken = '';

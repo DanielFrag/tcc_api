@@ -3,8 +3,8 @@ var Schema = mongoose.Schema;
 
 module.exports = mongoose.model('RequisitionTypeCode', new Schema({
     id: Schema.Types.ObjectId,
-    type: Schema.Types.String,
-    code: Schema.Types.Number
+    typeDescription: {type: Schema.Types.String, required: true},
+    code: {type: Schema.Types.Number, required:true}
 }, {
     collection: 'requisitionTypeCodes'
 }));
