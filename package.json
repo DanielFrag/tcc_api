@@ -1,5 +1,9 @@
 {
   "name": "slingshot-api",
+  "license": "CC-BY-4.0",
+  "version": "1.0.0",
+  "description": "API for the game "Slingshot 'n Bugs"",
+  "author": "Daniel Marcos Fragoso de Souza <danielmarcos2@yahoo.com.br>",
   "scripts": {
     "test": "mocha --reporter spec"
   },
