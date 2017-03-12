@@ -1,11 +1,12 @@
+let mongoose = require('mongoose');
 let jwt = require('jsonwebtoken');
-let secretKey = require('../config/parameters.js').secret;
+let secret = require('../config/parameters.js');
 let RequisitionTypeCode = require('../model/RequisitionTypeCode');
 let User = require('../model/User');
 
 module.exports = {
     tokenDecode: (req, res, next)=>{
-        let id = jwt.verify(req.body.token,secretKey, {ignoreExpiration: true}, (err, decoded)=>{
+        jwt.verify(req.body.token, secret.tokenKey, {ignoreExpiration: true}, (err, decoded)=>{
             if (decoded) {
                 req.decoded = decoded;
                 next();
@@ -15,7 +16,28 @@ module.exports = {
         });
     },
     start: (req, res)=>{
-        res.json({date: new Date()});
+        let userId = req.decoded.id;
+        let reqType = parseInt(req.body.type);
+        let reqGmt = parseInt(req.body.gmt);
+        let reqDate = new Date();
+
+        User.update({
+            _id: userId
+        }, {
+            $push: {
+                requisitionsByType: {
+                    type: reqType,
+                    date: reqDate,
+                    gmt: reqGmt
+                }
+            }
+        }, (err, doc)=>{
+            if (err) {
+                res.status(404).send('Not Found');
+            } else {
+                res.json({date: reqDate});
+            }
+        });
     },
     printedAd: (req, res)=>{
         res.json({err: 'not implemented'});
