@@ -1,7 +1,7 @@
-var jwt = require('jsonwebtoken');
-var secretKey = require('../config/parameters.js').secret;
-var RequisitionTypeCode = require('../model/RequisitionTypeCode');
-var User = require('../model/User');
+let jwt = require('jsonwebtoken');
+let secretKey = require('../config/parameters.js').secret;
+let RequisitionTypeCode = require('../model/RequisitionTypeCode');
+let User = require('../model/User');
 
 module.exports = {
     tokenDecode: (req, res, next)=>{
