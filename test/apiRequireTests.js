@@ -16,7 +16,7 @@ describe('Routes called on game start', ()=>{
         });
     });
 
-    describe('for a unregistered user', ()=>{
+    describe('for a new user', ()=>{
         let generatedToken;
         it('should deny a requisition to register without gameKey', (done)=>{
             chai.request(server)
@@ -53,7 +53,7 @@ describe('Routes called on game start', ()=>{
     });
 
     describe('for a registered user', ()=>{
-        let userRegistered;
+        let newUser;
         let reqDate;
         let reqType = 1;
         before((done)=>{
@@ -61,14 +61,15 @@ describe('Routes called on game start', ()=>{
                 if (err) {
                     done(err);
                 }
-                userRegistered = doc;
+                newUser = doc;
                 done();
             });
         });
+        
         it('should return the date of game start', (done)=>{
             chai.request(server)
                 .post('/game/user/start')
-                .send({token: userRegistered.token, type: reqType})
+                .send({token: newUser.token, type: reqType})
                 .end((err, res)=>{
                     if (err) {
                         done(err);
@@ -81,7 +82,7 @@ describe('Routes called on game start', ()=>{
         it('should find an item in user.requisitions with: the same type, and the same date returned in last it', (done)=>{
             User.findOne({
                 $and: [{
-                    token: userRegistered.token
+                    token: newUser.token
                 }, {
                     requisitions: {
                         $elemMatch: {
@@ -102,7 +103,7 @@ describe('Routes called on game start', ()=>{
             });
         });
         it('should stop in middleware, denying a token signed with a wrong secret.tokenKey', (done)=>{
-            let wrongToken =  jwt.sign(userRegistered._id, secret.tokenKey+'wrong', {expiresIn: '10d'});
+            let wrongToken =  jwt.sign(newUser._id, secret.tokenKey+'wrong', {expiresIn: '10d'});
             chai.request(server)
                 .post('/game/user/start')
                 .send({token: wrongToken})
