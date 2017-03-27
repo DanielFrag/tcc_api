@@ -14,7 +14,8 @@ module.exports = {
                 userToken = jwt.sign({id: doc._id}, secrets.tokenKey, {expiresIn: '10d'});
                 var objectId = new mongoose.Types.ObjectId(doc._id);        
                 User.findOneAndUpdate({_id: objectId}, {$set: {token: userToken}}, (err, doc) => {
-                    res.json({token: userToken});
+                    //res.status(200).send(userToken);
+                    res.json({jsonData: userToken});
                 });
             });
         }

@@ -20,7 +20,7 @@ describe('Routes called on game start', ()=>{
         let generatedToken;
         it('should deny a requisition to register without gameKey', (done)=>{
             chai.request(server)
-                .put('/game/userRegister')
+                .post('/game/userRegister')
                 .send({})
                 .end((err, res)=>{
                     chai.expect(res.status).to.equal(400);
@@ -29,15 +29,15 @@ describe('Routes called on game start', ()=>{
         });
         it('should register a new user and define a token for it', (done)=>{
             chai.request(server)
-                .put('/game/userRegister')
+                .post('/game/userRegister')
                 .send({gameKey: secret.gameKey})
                 .end((err, res)=>{
                     if (err) {
                         done(err);
                     }
-                    generatedToken = res.body.token;
+                    generatedToken = res.body.jsonData;
                     chai.expect(res.status).to.equal(200);
-                    chai.expect(res.body.token).to.be.a('string');
+                    chai.expect(res.body.jsonData).to.be.a('string');
                     done();
                 });
         });
@@ -74,8 +74,8 @@ describe('Routes called on game start', ()=>{
                     if (err) {
                         done(err);
                     }
-                    chai.expect(res.body.date).to.exist;
-                    reqDate = res.body.date;
+                    chai.expect(res.body.jsonData).to.exist;
+                    reqDate = res.body.jsonData;
                     done();
                 });
         });
@@ -128,15 +128,15 @@ describe('Routes called to register analytics data', ()=>{
     let reqType;
     before('register an user', (done)=>{
         chai.request(server)
-            .put('/game/userRegister')
+            .post('/game/userRegister')
             .send({gameKey: secret.gameKey})
             .end((err, res)=>{
                 if (err) {
                     done(err);
                 }
-                generatedToken = res.body.token;
+                generatedToken = res.body.jsonData;
                 chai.expect(res.status).to.equal(200);
-                chai.expect(res.body.token).to.be.a('string');
+                chai.expect(res.body.jsonData).to.be.a('string');
                 done();
             });
     });
@@ -163,7 +163,7 @@ describe('Routes called to register analytics data', ()=>{
                     done(err);
                 }
                 chai.expect(res.status).to.equal(200);
-                chai.expect(res.body.date).to.not.exist;
+                chai.expect(res.body.jsonData).to.not.exist;
                 done();
             });
     });
@@ -200,15 +200,15 @@ describe('Routes called to access game analytics', ()=>{
     describe('get registered users', ()=>{
         before('register an user', (done)=>{
             chai.request(server)
-                .put('/game/userRegister')
+                .post('/game/userRegister')
                 .send({gameKey: secret.gameKey})
                 .end((err, res)=>{
                     if (err) {
                         done(err);
                     }
-                    generatedToken = res.body.token;
+                    generatedToken = res.body.jsonData;
                     chai.expect(res.status).to.equal(200);
-                    chai.expect(res.body.token).to.be.a('string');
+                    chai.expect(res.body.jsonData).to.be.a('string');
                     done();
                 });
         });

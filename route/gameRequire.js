@@ -4,7 +4,7 @@ let router = express.Router();
 let userRegisterController = require('../controller/userRegister.js');
 let requisitionController = require('../controller/userRequisition.js');
 
-router.put('/userRegister', userRegisterController.insertUser);
+router.post('/userRegister', userRegisterController.insertUser);
 
 router.use('/user', requisitionController.tokenDecode);
 router.post('/user/start', requisitionController.start);

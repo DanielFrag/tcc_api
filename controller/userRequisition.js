@@ -51,7 +51,7 @@ module.exports = {
     },
     start: (req, res)=>{
         pushRequisition(req, res, ()=>{
-            res.json({date: req.date});
+            res.json({jsonData: req.date});
         });
     },
     printedAd: (req, res)=>{
