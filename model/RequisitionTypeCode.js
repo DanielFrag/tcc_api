@@ -1,8 +1,7 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-module.exports = mongoose.model('RequisitionTypeCode', new Schema({
-    id: Schema.Types.ObjectId,
+mongoose.model('RequisitionTypeCode', new Schema({
     typeDescription: {type: Schema.Types.String, required: true},
     code: {type: Schema.Types.Number, required:true}
 }, {

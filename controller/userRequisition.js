@@ -1,66 +1,69 @@
-let mongoose = require('mongoose');
-let jwt = require('jsonwebtoken');
-let secret = require('../config/parameters.js');
-let RequisitionTypeCode = require('../model/RequisitionTypeCode');
-let User = require('../model/User');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const secret = require('../config/parameters.js');
+const User = mongoose.model('User');
+const RequisitionTypeCode = mongoose.model('RequisitionTypeCode');
 
-let pushRequisition = (req, res, callback)=>{
-    let userId = req.decoded.id;
-    let reqType = parseInt(req.body.type);
-    let reqGmt = parseInt(req.body.gmt);
-    let reqDate = req.date;
-
-    User.update({
-        _id: userId
-    }, {
-        $push: {
-            requisitions: {
-                type: reqType,
-                date: reqDate,
-                gmt: reqGmt
-            }
-        }
-    }, (err, doc)=>{
-        if (err) {
-            res.status(404).send('Not Found');
+async function pushRequisition(req, res, callback) {
+    try{
+        await User.update({
+                _id: req.decoded.id
+            }, {
+                $push: {
+                    requisitions: {
+                        type: req.type,
+                        date: req.date,
+                        gmt: parseInt(req.body.gmt)
+                    }
+                }
+            });
+        if (callback) {
+            return callback();
         } else {
-            if (callback) {
-                callback();
-            } else {
-                res.status(200).send('OK');
-            }
+            return res.status(200).send('OK');
         }
-    });
+    } catch(e) {
+        return res.status(200).send('Can not insert the requisition');
+    }
+}
+
+async function findRequisitionType(code) {
+    return await RequisitionTypeCode
+        .findOne({code: code})
+        .lean();
 }
 
 module.exports = {
-    tokenDecode: (req, res, next)=>{
-        if (req.body.token) {
-            jwt.verify(req.body.token, secret.tokenKey, {ignoreExpiration: true}, (err, decoded)=>{
-                if (decoded) {
-                    req.decoded = decoded;
-                    req.date = new Date();
-                    next();
-                } else {
-                    res.status(400).send('Invalid token');
-                }
-            });
-        } else {
-            res.status(400).send('Token not found');
+    tokenDecode: (req, res, next) => {
+        try {
+            if (req.body.token) {
+                const decoded = jwt.verify(req.body.token, secret.tokenKey, {ignoreExpiration: true});
+                req.decoded = decoded;
+                req.date = new Date();
+                next();
+            } else {
+                return res.status(400).send('Missing token param');
+            }
+        } catch(e) {
+            return res.status(401).send('Invalid token');
         }
     },
-    start: (req, res)=>{
-        pushRequisition(req, res, ()=>{
-            res.json({jsonData: req.date});
+    start: async (req, res) => {
+        req.type = (await findRequisitionType(1)).typeDescription;
+        pushRequisition(req, res, () => {
+            return res.json({jsonData: req.date});
         });
     },
-    printedAd: (req, res)=>{
+    printedAd: async (req, res) => {
+        req.type = (await findRequisitionType(2)).typeDescription;
         pushRequisition(req, res);
     },
-    clickedAd: (req, res)=>{
+    clickedAd: async (req, res) => {
+        req.type = (await findRequisitionType(3)).typeDescription;
         pushRequisition(req, res);
     },
-    purchase: (req, res)=>{
+    purchase: async (req, res) => {
+        req.type = (await findRequisitionType(4)).typeDescription;
         pushRequisition(req, res);
     }
 }

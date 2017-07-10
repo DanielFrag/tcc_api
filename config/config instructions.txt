@@ -3,14 +3,13 @@ Criar o arquivo parameters.js que deve expor:
 - uma senha usada para acessar partes específicas da api,
 - uma palavra passe para a requisição de registro de usuário
 - a porta do servidor,
-- a url do banco de produção e
-- a url do banco de desenvolvimento.
+- a url do banco a ser utilizado
+
 Algo como:
 module.exports = {
     tokenKey: 'yourTokenKey',
     adminPassword: 'yourPass',
     gameKey: 'yourGameKey',
     port: process.env.PORT || '8080',
-    urlDb: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/your_collection',
-    testUrlDb: 'mongodb://localhost:27017/your_test_collection'
+    urlDb: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/your_collection'
 }

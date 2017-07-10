@@ -1,37 +1,42 @@
-process.env.NODE_ENV = 'test';
 
-let chai = require('chai');
-let chaiHttp = require('chai-http');
-let jwt = require ('jsonwebtoken');
+//Preparação do ambiente de teste
+const parameters = require('../config/parameters.js');
+const parametersPath = require('path').resolve('./config/parameters.js');
+require.cache[parametersPath].exports.urlDb = 'mongodb://localhost:27017/slingshot_test'
+const chai = require('chai');
+const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
-let User = require('../model/User.js');
-let RequisitionTypeCode = require('../model/RequisitionTypeCode.js');
-let server = require('../server.js');
-let secret = require('../config/parameters.js');
+const server = require('../server.js');
 
-describe('Routes called on game start', ()=>{
-    before('clean users collection', (done)=>{
-        User.remove({}, (err, doc)=>{
+const mongoose = require('mongoose');
+const jwt = require ('jsonwebtoken');
+const User = mongoose.model('User');
+const RequisitionTypeCode = mongoose.model('RequisitionTypeCode');
+const secret = require('../config/parameters.js');
+
+describe('Routes called on game start', () => {
+    before('clean users collection', (done) => {
+        User.remove({}, (err, doc) => {
             done();
         });
     });
 
-    describe('for a new user', ()=>{
+    describe('for a new user', () => {
         let generatedToken;
-        it('should deny a requisition to register without gameKey', (done)=>{
+        it('should deny a requisition to register without gameKey', (done) => {
             chai.request(server)
                 .post('/game/userRegister')
                 .send({})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).to.equal(400);
                     done();
                 });
         });
-        it('should register a new user and define a token for it', (done)=>{
+        it('should register a new user and define a token for it', (done) => {
             chai.request(server)
                 .post('/game/userRegister')
                 .send({gameKey: secret.gameKey})
-                .end((err, res)=>{
+                .end((err, res) => {
                     if (err) {
                         done(err);
                     }
@@ -41,8 +46,8 @@ describe('Routes called on game start', ()=>{
                     done();
                 });
         });
-        it('should find a user, in db, with a specific token', (done)=>{
-            User.findOne({token: generatedToken}, (err, doc)=>{
+        it('should find a user, in db, with a specific token', (done) => {
+            User.findOne({token: generatedToken}, (err, doc) => {
                 if (err) {
                     done(err);
                 }
@@ -52,34 +57,36 @@ describe('Routes called on game start', ()=>{
         });
     });
 
-    describe('for a registered user', ()=>{
+    describe('for a registered user', () => {
         let newUser;
         let reqDate;
-        let reqType = 1;
-        before((done)=>{
-            User.findOne({}, (err, doc)=>{
-                if (err) {
-                    done(err);
-                }
-                newUser = doc;
-                done();
-            });
+        let reqType;
+        before(async () => {
+            newUser = await User.findOne({});
+            await RequisitionTypeCode.create({typeDescription: 'start', code: 1});
+            await RequisitionTypeCode.create({typeDescription: 'printedAd', code: 2});
+            await RequisitionTypeCode.create({typeDescription: 'clickedAd', code: 3});
+            await RequisitionTypeCode.create({typeDescription: 'purchase', code: 4});
         });
         
-        it('should return the date of game start', (done)=>{
+        it('should return the date of game start', (done) => {
+            reqType = 'start';
             chai.request(server)
                 .post('/game/user/start')
-                .send({token: newUser.token, type: reqType})
-                .end((err, res)=>{
+                .send({token: newUser.token, gmt: 180})
+                .end((err, res) => {
                     if (err) {
                         done(err);
                     }
                     chai.expect(res.body.jsonData).to.exist;
                     reqDate = res.body.jsonData;
+                    User.findOne({token: newUser.token}, (e, d) =>{
+                        //console.log(d);
                     done();
+                    });
                 });
         });
-        it('should find an item in user.requisitions with: the same type, and the same date returned in last it', (done)=>{
+        it('should find an item in user.requisitions with: the same type, and the same date returned in last it', (done) => {
             User.findOne({
                 $and: [{
                     token: newUser.token
@@ -94,7 +101,7 @@ describe('Routes called on game start', ()=>{
                         }
                     }
                 }]
-            }, (err, doc)=>{
+            }, (err, doc) => {
                 if (err) {
                     done(err);
                 }
@@ -102,35 +109,39 @@ describe('Routes called on game start', ()=>{
                 done();
             });
         });
-        it('should stop in middleware, denying a token signed with a wrong secret.tokenKey', (done)=>{
-            let wrongToken =  jwt.sign(newUser._id, secret.tokenKey+'wrong', {expiresIn: '10d'});
+        it('should stop in middleware, denying a token signed with a wrong secret.tokenKey', (done) => {
+            let wrongToken =  jwt.sign(newUser._id, secret.tokenKey + 'wrong', {expiresIn: '10d'});
             chai.request(server)
                 .post('/game/user/start')
                 .send({token: wrongToken})
-                .end((err, res)=>{
-                    chai.expect(res.status).equals(400);
+                .end((err, res) => {
+                    chai.expect(res.status).equals(401);
                     done();
                 });
         });
     });
     
-    after('clean db changes', (done) => {
-        User.remove({}, (err)=>{
-            if (!err) {
-                done();
-            }
-        });
+    after('clean db changes', async () => {
+        User.remove({});
+        RequisitionTypeCode.remove({});
     });
 });
 
-describe('Routes called to register analytics data', ()=>{
+describe('Routes called to register analytics data', () => {
     let generatedToken;
     let reqType;
-    before('register an user', (done)=>{
+    before('Create the requisition type code', async () => {
+        await RequisitionTypeCode.create({typeDescription: 'start', code: 1});
+        await RequisitionTypeCode.create({typeDescription: 'printedAd', code: 2});
+        await RequisitionTypeCode.create({typeDescription: 'clickedAd', code: 3});
+        await RequisitionTypeCode.create({typeDescription: 'purchase', code: 4});
+    });
+
+    it('should register an user', (done) => {
         chai.request(server)
             .post('/game/userRegister')
             .send({gameKey: secret.gameKey})
-            .end((err, res)=>{
+            .end((err, res) => {
                 if (err) {
                     done(err);
                 }
@@ -140,25 +151,24 @@ describe('Routes called to register analytics data', ()=>{
                 done();
             });
     });
-
-    it('should stop in middleware (/game/user), denying a token signed with a wrong secret.tokenKey', (done)=>{
-        User.findOne({}, (err, doc)=>{
+    it('should stop in middleware (/game/user), denying a token signed with a wrong secret.tokenKey', (done) => {
+        User.findOne({}, (err, doc) => {
             let wrongToken =  jwt.sign({id: doc._id}, secret.tokenKey+'wrong', {expiresIn: '10d'});
             chai.request(server)
                 .post('/game/user/printedAd')
                 .send({token: wrongToken})
-                .end((err, res)=>{
-                    chai.expect(res.status).equals(400);
+                .end((err, res) => {
+                    chai.expect(res.status).equals(401);
                     done();
                 });
         });
     });
-    it('should register a new requisition with a specific type', (done)=>{
-        reqType = 2;
+    it('should register a new requisition with a specific type', (done) => {
+        reqType = 'printedAd';
         chai.request(server)
             .post('/game/user/printedAd')
-            .send({token: generatedToken, type: reqType})
-            .end((err, res)=>{
+            .send({token: generatedToken})
+            .end((err, res) => {
                 if (err) {
                     done(err);
                 }
@@ -167,7 +177,7 @@ describe('Routes called to register analytics data', ()=>{
                 done();
             });
     });
-    it('should find an item in user.requisitions with the same type that was send in last it', (done)=>{
+    it('should find an item in user.requisitions with the same type that was send in last it', (done) => {
         User.findOne({
             $and: [{
                 token: generatedToken
@@ -178,7 +188,7 @@ describe('Routes called to register analytics data', ()=>{
                     }
                 }
             }]
-        }, (err, doc)=>{
+        }, (err, doc) => {
             if (err) {
                 done(err);
             }
@@ -188,7 +198,7 @@ describe('Routes called to register analytics data', ()=>{
     });
     
     after('clean db changes', (done) => {
-        User.remove({}, (err)=>{
+        User.remove({}, (err) => {
             if (!err) {
                 done();
             }
@@ -196,13 +206,13 @@ describe('Routes called to register analytics data', ()=>{
     });
 });
 
-describe('Routes called to access game analytics', ()=>{
-    describe('get registered users', ()=>{
-        before('register an user', (done)=>{
+describe('Routes called to access game analytics', () => {
+    describe('get registered users', () => {
+        before('register an user', (done) => {
             chai.request(server)
                 .post('/game/userRegister')
                 .send({gameKey: secret.gameKey})
-                .end((err, res)=>{
+                .end((err, res) => {
                     if (err) {
                         done(err);
                     }
@@ -213,28 +223,28 @@ describe('Routes called to access game analytics', ()=>{
                 });
         });
 
-        it('should stop in middleware (/admin), denying a requisition with a wrong adminPassword', (done)=>{
+        it('should stop in middleware (/admin), denying a requisition with a wrong adminPassword', (done) => {
             chai.request(server)
                 .get('/analytics/admin/get_users_data')
                 .query({pass: secret.adminPassword + 'wrong'})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(400);
                     done();
                 });
         });
-        it('should stop in middleware (/admin), denying a requisition without a adminPassword', (done)=>{
+        it('should stop in middleware (/admin), denying a requisition without a adminPassword', (done) => {
             chai.request(server)
                 .get('/analytics/admin/get_users_data')
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(400);
                     done();
                 });
         });
-        it('should return all users', (done)=>{
+        it('should return all users', (done) => {
             chai.request(server)
                 .get('/analytics/admin/get_users_data')
                 .query({pass: secret.adminPassword})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(200);
                     chai.expect(res.body.users).to.exist;
                     done();
@@ -242,50 +252,50 @@ describe('Routes called to access game analytics', ()=>{
         });
 
         after('clean db changes', (done) => {
-            User.remove({}, (err)=>{
+            User.remove({}, (err) => {
                 if (!err) {
                     done();
                 }
             });
         });
     });
-    describe('manager type codes', ()=>{
+    describe('manager type codes', () => {
         let reqTypeCode = {typeDescription: 'foo', code: 1};
-        before('clean requisition type codes collection', (done)=>{
-            RequisitionTypeCode.remove({}, (err, doc)=>{
+        before('clean requisition type codes collection', (done) => {
+            RequisitionTypeCode.remove({}, (err, doc) => {
                 done();
             })
         });
 
-        it('should deny insertion without parameters', (done)=>{
+        it('should deny insertion without parameters', (done) => {
             chai.request(server)
                 .put('/analytics/admin/insert_req_type')
                 .send({})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(400);
                     done();
                 });
         });
-        it('should deny insertion without valid parameters', (done)=>{
+        it('should deny insertion without valid parameters', (done) => {
             chai.request(server)
                 .put('/analytics/admin/insert_req_type')
                 .send({req: {typeDescription: 1, code: 'foo'}, pass: secret.pass})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(400);
                     done();
                 });
         });
-        it('should insert new requisition type code', (done)=>{
+        it('should insert new requisition type code', (done) => {
             chai.request(server)
-                .put('/analytics/admin/insert_req_type')
+                .put('/analytics/admin/req_type')
                 .send({req: reqTypeCode, pass: secret.adminPassword})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(200);
                     done();
                 });
         });
-        it('should find a requisition type code inserted', (done)=>{
-            RequisitionTypeCode.findOne(reqTypeCode, (err, doc)=>{
+        it('should find a requisition type code inserted', (done) => {
+            RequisitionTypeCode.findOne(reqTypeCode, (err, doc) => {
                 if (err) {
                     done(err);
                 }
@@ -293,17 +303,17 @@ describe('Routes called to access game analytics', ()=>{
                 done();
             });
         });
-        it('will try to insert the same requisition type code', (done)=>{
+        it('will try to insert the same requisition type code', (done) => {
             chai.request(server)
-                .put('/analytics/admin/insert_req_type')
+                .put('/analytics/admin/req_type')
                 .send({req: reqTypeCode, pass: secret.adminPassword})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(200);
                     done();
                 });
         });
-        it('should not find replications', (done)=>{
-            RequisitionTypeCode.find(reqTypeCode, (err, docs)=>{
+        it('should not find replications', (done) => {
+            RequisitionTypeCode.find(reqTypeCode, (err, docs) => {
                 if (err) {
                     done(err);
                 }
@@ -311,11 +321,11 @@ describe('Routes called to access game analytics', ()=>{
                 done();
             });
         });
-        it('should get requisition type codes', (done)=>{
+        it('should get requisition type codes', (done) => {
             chai.request(server)
-                .get('/analytics/admin/get_req_type')
+                .get('/analytics/admin/req_type')
                 .query({pass: secret.adminPassword})
-                .end((err, res)=>{
+                .end((err, res) => {
                     chai.expect(res.status).equals(200);
                     chai.expect(res.body.reqTypeCodes).to.exist;
                     done();
@@ -323,7 +333,7 @@ describe('Routes called to access game analytics', ()=>{
         });
 
         after('clean db changes', (done) => {
-            RequisitionTypeCode.remove({}, (err)=>{
+            RequisitionTypeCode.remove({}, (err) => {
                 if (!err) {
                     done();
                 }

@@ -1,8 +1,7 @@
-let mongoose = require('mongoose');
-let Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-module.exports = mongoose.model('User', new Schema({
-    id: Schema.Types.ObjectId,
+mongoose.model('User', new Schema({
     token: Schema.Types.String,
     requisitions: Schema.Types.Mixed
 }, {

@@ -1,16 +1,19 @@
-let express = require('express');
-let bodyParser = require('body-parser');
-require('./dataBase.js')(process.env.NODE_ENV == 'test');
-
-let gameRequire = require('../route/gameRequire.js');
-let gameAnalytics = require('../route/gameAnalytics.js');
+const express = require('express');
+const bodyParser = require('body-parser');
+require('./dataBase.js')();
+require('../model/User.js');
+const fs = require('fs');
+const models = fs.readdirSync(require('path').resolve( './model'));
+models.forEach(model => {
+    require(require('path').resolve( './model/' + model));
+});
+const gameRequire = require('../route/gameRequire.js');
+const gameAnalytics = require('../route/gameAnalytics.js');
+const parameters = require('./parameters.js');
 
 module.exports = ()=>{
-    let app = express();
-
-    app.use(bodyParser.json());                                     
-    app.use(bodyParser.urlencoded({extended: true}));               
-    app.use(bodyParser.text());                                    
+    const app = express();
+    app.set('port', parameters.port);
     app.use(bodyParser.json({ type: 'application/json'}));  
     app.use('/game', gameRequire);
     app.use('/analytics', gameAnalytics);
